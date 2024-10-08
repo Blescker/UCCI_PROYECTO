@@ -1,0 +1,90 @@
+{% extends "layout.html" %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static "css/chatbot.css" %}">
+
+<h2>Chat con Asistente Virtual</h2>
+<div id="chat-box">
+    <div id="messages" class="messages-container"></div>
+    <form id="chat-form" method="post">
+        {% csrf_token %}
+        <input type="text" id="message" name="message" placeholder="Escribe tu mensaje..." autocomplete="off">
+        <button type="submit" class="send-btn">Enviar</button>
+    </form>
+</div>
+
+<script>
+    const palabrasClave = ['triste', 'sin esperanza', 'no vale la pena', 'ansiedad', 'depresión'];
+
+    // Función para añadir mensajes al chat
+    function addMessage(from, message) {
+        const messagesDiv = document.getElementById('messages');
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message', from.toLowerCase());
+
+        const messageText = document.createElement('p');
+        messageText.innerHTML = `<strong>${from}:</strong> ${message}`;
+
+        messageElement.appendChild(messageText);
+        messagesDiv.appendChild(messageElement);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;  // Desplaza hacia abajo en el chat
+    }
+
+    // Función para verificar si el mensaje contiene una palabra clave
+    function contienePalabraClave(message) {
+        return palabrasClave.some(palabra => message.toLowerCase().includes(palabra));
+    }
+
+    // Enviar el mensaje del usuario al servidor
+    document.getElementById('chat-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const message = document.getElementById('message').value;
+
+        // Mostrar el mensaje del usuario en el chat
+        addMessage('Tú', message);
+        document.getElementById('message').value = '';
+
+        // Verificar si el mensaje contiene una palabra clave
+        if (contienePalabraClave(message)) {
+            // Mostrar un mensaje especial
+            addMessage('Asistente', 'Hemos detectado que mencionas temas importantes. Serás redirigido al cuestionario para un diagnóstico más exacto.');
+
+            // Esperar 2 segundos antes de redirigir
+            setTimeout(function() {
+                window.location.href = "{% url 'test' %}";
+            }, 3000);  // 2 segundos de delay
+        } else {
+            // Si no contiene palabra clave, enviar el mensaje al servidor
+            fetch("{% url 'chatbot' %}", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: new URLSearchParams({
+                    'message': message
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.redirect) {
+                    // Si detecta palabras clave en el backend, redirigir al test
+                    window.location.href = "{% url 'test' %}";
+                } else {
+                    // Mostrar la respuesta del chatbot
+                    addMessage('Asistente', data.response);
+                }
+            });
+        }
+    });
+
+    // Cargar la primera pregunta cuando la página se cargue
+    window.onload = function() {
+        fetch("{% url 'chatbot' %}")
+        .then(response => response.json())
+        .then(data => {
+            addMessage('Asistente', data.response);
+        });
+    }
+</script>
+{% endblock %}

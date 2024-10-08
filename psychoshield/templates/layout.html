@@ -1,0 +1,60 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static "css/layout.css" %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/animation.css' %}">
+    <!-- Aquí es donde agregas el favicon -->
+    <link rel="icon" href="{% static 'images/psicologia.ico' %}" type="image/x-icon">
+    <title> {% block title %}{% endblock  %}</title>
+</head>
+<body>
+    <!-- Header con logo y contacto -->
+    <header>
+        <div class="logo">
+            <img src="{% static "images/logo1.png" %}" alt="Logo de la Aplicación">
+        </div>
+        {% if user.is_authenticated %}
+        <div class="user-info">
+            <p>Bienvenido, {{ user.nombre }}!</p>  <!-- Aquí se muestra el nombre del usuario -->
+            <a href="{% url 'logout' %}" class="btn-logout">Cerrar sesión</a>  <!-- Botón de logout con nuevo estilo -->
+        </div>
+        {% endif %}
+    </header>
+
+    {% if request.resolver_match.url_name != 'login' and request.resolver_match.url_name != 'register' %}
+    <nav>
+        <!-- Condicional: Mostrar nav según el rol del usuario -->
+        {% if user.rol == 'psicólogo' %}
+        <!-- Nav del Psicólogo -->
+        <ul>
+            <li><a href="{% url 'vista_psicologo' %}">Inicio</a></li>
+            <li><a href="{% url 'lista_pacientes' %}">Pacientes</a></li>
+            <li><a href="{% url 'resultados_tests' %}">Resultados de Tests</a></li>
+            <li><a href="{% url 'perfil_psicologo' %}">Perfil</a></li>
+        </ul>
+        {% elif user.rol == 'paciente' %}
+        <!-- Nav del Paciente -->
+        <ul>
+            <li><a href="{% url 'index' %}" class="active">Inicio</a></li>
+            <li><a href="{% url 'information' %}">Información</a></li>
+            <li><a href="{% url 'actividades' %}">Actividades</a></li>
+            <li><a href="{% url 'numerosAyuda' %}">Números de Ayuda</a></li>
+        </ul>
+        {% endif %}
+    </nav>
+    {% endif %}
+
+    {% block content %}
+    
+    {% endblock  %}
+
+    
+</body>
+</html>
